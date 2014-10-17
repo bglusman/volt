@@ -1,29 +1,51 @@
 ENV['SERVER'] = 'true'
 
-require 'opal'
-if RUBY_PLATFORM == 'java'
-  require 'jubilee'
-else
-  require 'thin'
+Platform = Object.new
+PlatformString = RUBY_PLATFORM =='java' ? RUBY_PLATFORM : 'non_java'
+
+def Platform.java?
+  PlatformString == 'java'
 end
 
-require "rack"
-if RUBY_PLATFORM != 'java'
+def Platform.java
+  require 'jubilee'
+  yield
+end
+
+def Platform.non_java
+  require 'thin'
   require "rack/sockjs"
   require "eventmachine"
-end
-require "sass"
-require "sprockets-sass"
-require 'listen'
-
-require 'volt'
-require 'volt/boot'
-require 'volt/tasks/dispatcher'
-require 'volt/tasks/task_handler'
-require 'volt/server/component_handler'
-if RUBY_PLATFORM != 'java'
+  yield
   require 'volt/server/socket_connection_handler'
 end
+
+def Platform.handle_sockets
+  unless java?
+    SocketConnectionHandler.dispatcher = Dispatcher.new
+
+    @app.map "/channel" do
+      run Rack::SockJS.new(SocketConnectionHandler)#, :websocket => false
+    end
+  end
+end
+
+require 'opal'
+
+Platform.public_send(PlatformString) do
+  require "rack"
+
+  require "sass"
+  require "sprockets-sass"
+  require 'listen'
+
+  require 'volt'
+  require 'volt/boot'
+  require 'volt/tasks/dispatcher'
+  require 'volt/tasks/task_handler'
+  require 'volt/server/component_handler'
+end
+
 require 'volt/server/rack/component_paths'
 require 'volt/server/rack/index_files'
 require 'volt/server/rack/opal_files'
@@ -111,13 +133,7 @@ class Server
     component_paths.require_in_components
 
     # Handle socks js connection
-    if RUBY_PLATFORM != 'java'
-      SocketConnectionHandler.dispatcher = Dispatcher.new
-
-      @app.map "/channel" do
-        run Rack::SockJS.new(SocketConnectionHandler)#, :websocket => false
-      end
-    end
+    Platform.handle_sockets
 
     @app.use Rack::Static,
       :urls => ["/"],
