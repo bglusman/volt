@@ -20,11 +20,11 @@ def Platform.non_java
   require 'volt/server/socket_connection_handler'
 end
 
-def Platform.handle_sockets
+def Platform.handle_sockets(app)
   unless java?
     SocketConnectionHandler.dispatcher = Dispatcher.new
 
-    @app.map "/channel" do
+    app.map "/channel" do
       run Rack::SockJS.new(SocketConnectionHandler)#, :websocket => false
     end
   end
@@ -133,7 +133,7 @@ class Server
     component_paths.require_in_components
 
     # Handle socks js connection
-    Platform.handle_sockets
+    Platform.handle_sockets(@app)
 
     @app.use Rack::Static,
       :urls => ["/"],
