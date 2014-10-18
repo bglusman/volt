@@ -1,18 +1,18 @@
 ENV['SERVER'] = 'true'
 
-Platform = Object.new
+SeerverPlatform = Object.new
 PlatformString = RUBY_PLATFORM =='java' ? RUBY_PLATFORM : 'non_java'
 
-def Platform.java?
+def SeerverPlatform.java?
   PlatformString == 'java'
 end
 
-def Platform.java
+def SeerverPlatform.java
   require 'jubilee'
   yield
 end
 
-def Platform.non_java
+def SeerverPlatform.non_java
   require 'thin'
   require "rack/sockjs"
   require "eventmachine"
@@ -20,7 +20,7 @@ def Platform.non_java
   require 'volt/server/socket_connection_handler'
 end
 
-def Platform.handle_sockets(app)
+def SeerverPlatform.handle_sockets(app)
   unless java?
     SocketConnectionHandler.dispatcher = Dispatcher.new
 
@@ -32,7 +32,7 @@ end
 
 require 'opal'
 
-Platform.public_send(PlatformString) do
+SeerverPlatform.public_send(PlatformString) do
   require "rack"
 
   require "sass"
@@ -133,7 +133,7 @@ class Server
     component_paths.require_in_components
 
     # Handle socks js connection
-    Platform.handle_sockets(@app)
+    SeerverPlatform.handle_sockets(@app)
 
     @app.use Rack::Static,
       :urls => ["/"],
