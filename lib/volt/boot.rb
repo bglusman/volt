@@ -9,15 +9,19 @@ end
 class Volt
   def self.boot(app_path)
     # Run the app config to load all users config files
-    Volt.run_files_in_config_folder
-
-    if Volt.server?
-      $page = Page.new
+    Shotgun.before_fork do
+      Volt.run_files_in_config_folder
     end
 
-    component_paths = ComponentPaths.new(app_path)
-    component_paths.require_in_components
+    Shotgun.after_fork do
+      if Volt.server?
+        $page = Page.new
+      end
 
-    return component_paths
+      component_paths = ComponentPaths.new(app_path)
+      component_paths.require_in_components
+
+      return component_paths
+    end
   end
 end

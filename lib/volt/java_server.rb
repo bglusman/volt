@@ -1,50 +1,20 @@
 ENV['SERVER'] = 'true'
 
-SeerverPlatform = Object.new
-PlatformString = RUBY_PLATFORM =='java' ? RUBY_PLATFORM : 'non_java'
-
-def SeerverPlatform.java?
-  PlatformString == 'java'
-end
-
-def SeerverPlatform.java
-  require 'jubilee'
-  yield
-end
-
-def SeerverPlatform.non_java
-  require 'thin'
-  require "rack/sockjs"
-  require "eventmachine"
-  yield
-  require 'volt/server/socket_connection_handler'
-end
-
-def SeerverPlatform.handle_sockets(app)
-  unless java?
-    SocketConnectionHandler.dispatcher = Dispatcher.new
-
-    app.map "/channel" do
-      run Rack::SockJS.new(SocketConnectionHandler)#, :websocket => false
-    end
-  end
-end
-
 require 'opal'
+require 'jubilee'
 
-SeerverPlatform.public_send(PlatformString) do
-  require "rack"
 
-  require "sass"
-  require "sprockets-sass"
-  require 'listen'
+require "rack"
 
-  require 'volt'
-  require 'volt/boot'
-  require 'volt/tasks/dispatcher'
-  require 'volt/tasks/task_handler'
-  require 'volt/server/component_handler'
-end
+require "sass"
+require "sprockets-sass"
+require 'listen'
+
+require 'volt'
+require 'volt/boot'
+require 'volt/tasks/dispatcher'
+require 'volt/tasks/task_handler'
+require 'volt/server/component_handler'
 
 require 'volt/server/rack/component_paths'
 require 'volt/server/rack/index_files'
@@ -131,9 +101,6 @@ class Server
     @app.use IndexFiles, @component_paths, opal_files
 
     component_paths.require_in_components
-
-    # Handle socks js connection
-    SeerverPlatform.handle_sockets(@app)
 
     @app.use Rack::Static,
       :urls => ["/"],
