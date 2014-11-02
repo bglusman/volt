@@ -80,6 +80,7 @@ module Volt
     end
 
     def app
+      Volt.configuration_values_default_to_nil!
       @app = Rack::Builder.new
 
       # Should only be used in production

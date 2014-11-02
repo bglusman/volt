@@ -1,5 +1,7 @@
 # Config lets a user set global config options for Volt.
 require 'configurations'
+require 'monkey_patches'
+
 module Volt
   include Configurations
 
@@ -12,7 +14,6 @@ module Volt
           db_host:   ENV['DB_HOST'] || 'localhost',
           db_port:   (ENV['DB_PORT'] || 27_017).to_i,
           db_driver: ENV['DB_DRIVER'] || 'mongo',
-          deflate:   nil
         }
     end
 
@@ -37,7 +38,5 @@ module Volt
   configuration_defaults do |c|
     c.from_h(Volt.defaults)
   end
-
-
 
 end
