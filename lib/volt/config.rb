@@ -4,6 +4,7 @@ require 'monkey_patches'
 
 module Volt
   include Configurations
+  configuration_values_default_to_nil!
 
   class << self
     def defaults
